@@ -122,13 +122,26 @@ def cpt(G):
 CPT = cpt(make_graph())
 
 import requests as rq 
-url = "http://127.0.0.1/parkinfo.php"
 
-def login(username, password):
-    response = rq.get(url, auth=(username, password))
-    if(response.status_code == 200):
-        print(f"Successfully logged in as {username}.")
-    else:
-        print(f"Login failed: {response.status_code}")
+def verify_success(status_code):
+    if(status_code == 200):
+        print(f"HTTP request success : {status_code}")
+    else:   
+        print(f"HTTP request failure : {status_code}")
 
+def reserve(loc, username, password):
+    url = "http://127.0.0.1/reserve.php"
+    form_data = { 
+                 "loc": loc 
+    }
+    response = rq.post(url, data=form_data, auth=(username, password))
+    verify_success(response.status_code)
+
+def release(loc, username, password):      
+    url = "http://127.0.0.1/release.php"
+    form_data = {
+        "loc": loc
+    }
+    response = rq.post(url, data=form_data, auth=(username, password))
+    verify_success(response.status_code)
 
