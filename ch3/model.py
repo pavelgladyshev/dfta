@@ -25,7 +25,7 @@ def lpark(s):
         return None
 
 O = { "gladyshev", "johnson", "hyde", "lowry", "empty" }
-L = { "stephens", "synge", "westland", "kildare" }
+L = [ "stephens", "synge", "westland", "kildare" ]
 V = itertools.product(O,O,O,O)
 S = [v for v in list(V) if valid(v)]
 
@@ -121,7 +121,7 @@ def cpt(G):
 #  Chinese Postman Trip calculated for graph G (list of visited states)
 CPT = cpt(make_graph())
 
-# HTTP 
+# HTTP methods
 import requests as rq 
 username = "gladyshev" # Need a default username &
 password = "g123"      # password for requests to parkinfo 
@@ -178,6 +178,24 @@ def parkinfo_state():
         state += (r.get(loc),)
     return state
 
+# walk through CPT
 
+def get_password(username):
+    return f"{username[0]}123"
 
+def step(cpt_edge):
+    initial, final = S[cpt_edge[0]], S[cpt_edge[1]]
+    for i in range(0, len(initial)):
+        if(initial[i] != final[i]):
+            loc = L[i]
+            if(final[i] != "empty"):
+                reserve(loc, final[i], get_password(final[i]))
+            else:
+                release(loc, initial[i], get_password(initial[i]))
+
+def teleport(state_index):
+    empty = S.index(("empty","empty","empty","empty"))
+    current = S.index(parkinfo_state())
+    step((current, empty)) 
+    step((empty, state_index))
 
