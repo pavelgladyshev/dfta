@@ -121,13 +121,32 @@ def cpt(G):
 #  Chinese Postman Trip calculated for graph G (list of visited states)
 CPT = cpt(make_graph())
 
+# HTTP 
 import requests as rq 
+username = "gladyshev" # Need a default username &
+password = "g123"      # password for requests to parkinfo 
 
 def verify_success(status_code):
     if(status_code == 200):
-        print(f"HTTP request success : {status_code}")
+        return f"HTTP request success : {status_code}"
     else:   
-        print(f"HTTP request failure : {status_code}")
+        return f"HTTP request failure : {status_code}"
+
+def parkinfo():
+    url = "http://127.0.0.1/parkinfo.php"
+    response = rq.get(url, auth=(username,password)) 
+    if(response.status_code == 200):
+        return response.text
+    else:
+        return f"HTTP request failure : {response.status_code}"
+
+def parkinfo_len():
+    url = "http://127.0.0.1/parkinfo.php"
+    response = rq.get(url, auth=(username, password))
+    if(response.status_code == 200):
+        return len(response.text)
+    else:
+        return f"HTTP request failure : {response.status_code}"
 
 def reserve(loc, username, password):
     url = "http://127.0.0.1/reserve.php"
@@ -135,7 +154,7 @@ def reserve(loc, username, password):
                  "loc": loc 
     }
     response = rq.post(url, data=form_data, auth=(username, password))
-    verify_success(response.status_code)
+    return verify_success(response.status_code)
 
 def release(loc, username, password):      
     url = "http://127.0.0.1/release.php"
@@ -143,5 +162,6 @@ def release(loc, username, password):
         "loc": loc
     }
     response = rq.post(url, data=form_data, auth=(username, password))
-    verify_success(response.status_code)
+    return verify_success(response.status_code)
+
 
