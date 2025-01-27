@@ -201,13 +201,24 @@ def teleport(state_index):
 
 def walk():
     traversal = list()
+    unexpected_lengths = list()
+    #move to initial state
     teleport(CPT[0][0])
-    for cpt_edge in CPT:
+    for cpt_edge in CPT: 
+        # check length of parkinfo for state 
+        expected_length = lpark(S[cpt_edge[0]])
+        actual_length = parkinfo_len()
+        if(expected_length != actual_length):
+            unexpected_lengths.append((cpt_edge[0],expected_length, actual_length)) 
+        # record actual state traversal with Redis 
         initial = S.index(parkinfo_state())
         step(cpt_edge)
         final = S.index(parkinfo_state())
         traversal.append((initial,final))
     if(CPT == traversal):
-        return f"Walk successfully completed with {len(CPT)} edges traversed."
+        ret = f"Walk successfully completed with {len(CPT)} edges traversed and {len(unexpected_lengths)} occurences of unexpected size of parkinfo.php output."
+        for item in unexpected_lengths:
+            ret += f"\nAt state {item[0]}, expected {item[1]} bytes, actual {item[2]} bytes."
     else:
-        return f"Walk failed"
+        ret = f"Walk failed."
+    return ret
