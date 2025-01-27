@@ -164,4 +164,20 @@ def release(loc, username, password):
     response = rq.post(url, data=form_data, auth=(username, password))
     return verify_success(response.status_code)
 
+# get current state of parkinfo from Redis
+import redis
+r = redis.Redis(
+        host = 'localhost',
+        port = 6379,
+        decode_responses = True
+)
+
+def parkinfo_state():
+    state = tuple()
+    for loc in L:
+        state += (r.get(loc),)
+    return state
+
+
+
 
