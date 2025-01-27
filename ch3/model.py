@@ -199,3 +199,15 @@ def teleport(state_index):
     step((current, empty)) 
     step((empty, state_index))
 
+def walk():
+    traversal = list()
+    teleport(CPT[0][0])
+    for cpt_edge in CPT:
+        initial = S.index(parkinfo_state())
+        step(cpt_edge)
+        final = S.index(parkinfo_state())
+        traversal.append((initial,final))
+    if(CPT == traversal):
+        return f"Walk successfully completed with {len(CPT)} edges traversed."
+    else:
+        return f"Walk failed"
