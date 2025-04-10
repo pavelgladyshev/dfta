@@ -179,6 +179,7 @@ def parkinfo_state():
     return state
 
 # walk through CPT
+import timeit
 
 def get_password(username):
     return f"{username[0]}123"
@@ -222,3 +223,15 @@ def walk():
     else:
         ret = f"Walk failed."
     return ret
+
+def time_and_output_wrapper(func):
+    def wrapped():
+        result = func()
+        print(f"{result}")
+        return result 
+    return wrapped
+
+walker = time_and_output_wrapper(walk)
+
+execution_time = timeit.timeit(walker, number=1)
+print(f"Time taken to execute walk: {execution_time} seconds")
