@@ -6,12 +6,21 @@ directly in Redis and record the size of the parkinfo.php response body
 (a) without Accept-Encoding (identity) and (b) with Accept-Encoding: gzip
 (compressed by mod_deflate). Results go to /tmp/parkinfo_measurements.csv.
 
-Part 2 (--walk): generate an Eulerian circuit over all 1088 valid
-transitions (Hierholzer's algorithm), execute it against the live system
+Part 2 (--walk): build the input-complete transition graph -- every request
+in the model's input alphabet in every state is an edge: the 1088
+state-changing transitions plus the 3928 requests the validation checks
+reject, represented as self-loops -- generate an Eulerian circuit over its
+5016 edges (Hierholzer's algorithm), execute it against the live system
 through HTTP POSTs to reserve.php/release.php (authenticated as the acting
-user), and at every transition verify that both response sizes match the
-mapping measured in Part 1 and that the Redis state matches the model.
-Summary goes to /tmp/parkinfo_summary.json.
+user), and after every request verify that the Redis state matches the
+model, that both response sizes match the mapping measured in Part 1, and
+that the %b size field Apache appended to LOG for the page request equals
+the model's predicted length. Summary goes to /tmp/parkinfo_summary.json.
+
+Requires (see README.md): the four basic-auth users with password PASSWORD,
+Redis on localhost, and an Apache CustomLog in body-length format:
+    LogFormat "%h %l %u %t \"%r\" %>s %b" clf_body
+    CustomLog /var/log/parkinfo_clf.log clf_body
 
 Standard library only; Redis is driven via redis-cli.
 """
