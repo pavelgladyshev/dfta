@@ -24,6 +24,7 @@ import urllib.request
 from itertools import product
 
 BASE = "http://localhost"
+LOG = "/var/log/parkinfo_clf.log"  # CustomLog with LogFormat "%h %l %u %t \"%r\" %>s %b"
 OCCUPANTS = ["johnson", "anonymous", "lowry", "hyde", "empty"]
 LOCATIONS = ["stephens", "synge", "westland", "kildare"]
 DLEN = {"johnson": 2, "anonymous": 4, "lowry": 0, "hyde": -1, "empty": 0}
@@ -43,6 +44,32 @@ def http_get(path, user="lowry", gzip=False):
     with urllib.request.urlopen(req) as r:
         body = r.read()
         return body, r.headers.get("Content-Encoding", "identity")
+
+
+def http_get_logged(user="lowry"):
+    """GET parkinfo.php without compression and return (body, logged size),
+    where the logged size is the %b field Apache appended to LOG for this
+    request. Reads only the bytes appended since before the request, and
+    polls briefly because Apache writes the line after responding."""
+    import os
+    import time
+    try:
+        n0 = os.stat(LOG).st_size
+    except FileNotFoundError:
+        n0 = 0
+    body, _ = http_get("/parkinfo.php", user=user, gzip=False)
+    for _ in range(200):
+        try:
+            with open(LOG, "rb") as f:
+                f.seek(n0)
+                tail = f.read().decode(errors="replace")
+        except FileNotFoundError:
+            tail = ""
+        lines = [ln for ln in tail.splitlines() if '"GET /parkinfo.php' in ln]
+        if lines:
+            return body, int(lines[-1].rsplit(" ", 1)[1])
+        time.sleep(0.005)
+    return body, None
 
 
 def http_post(path, data, user):
@@ -125,6 +152,17 @@ def build_euler_circuit(states):
                 t = s[:i] + ("empty",) + s[i + 1:]
                 adj[s].append((t, ("release", s[i])))
                 n_edges += 1
+        # Rejected inputs: the model predicts no state change (self-loops).
+        for user in OCCUPANTS[:4]:
+            for i, loc in enumerate(LOCATIONS):
+                if s[i] != "empty" or user in parked:
+                    adj[s].append((s, ("reserve", loc, user)))
+                    n_edges += 1
+            adj[s].append((s, ("reserve", "bogus", user)))  # invalid codename
+            n_edges += 1
+            if user not in parked:
+                adj[s].append((s, ("release", user)))
+                n_edges += 1
     start = ("empty",) * 4
     stack = [(start, None)]
     circuit = []
@@ -154,7 +192,14 @@ def part2(states, rows):
     redis_set_state(("empty",) * 4)
     failures = []
     steps = 0
+    n_valid = n_reject = 0
+    prev = circuit[0][0]
     for node, action in circuit[1:]:
+        if node == prev:
+            n_reject += 1
+        else:
+            n_valid += 1
+        prev = node
         if action[0] == "reserve":
             _, loc, user = action
             http_post("/reserve.php", "loc=" + loc, user)
@@ -167,11 +212,14 @@ def part2(states, rows):
             failures.append({"step": steps, "kind": "state",
                              "expected": node, "actual": actual})
             redis_set_state(node)  # resync and continue
-        body_id, _ = http_get("/parkinfo.php", gzip=False)
+        body_id, logged = http_get_logged()
         body_gz, _ = http_get("/parkinfo.php", gzip=True)
         if len(body_id) != lpark(node):
             failures.append({"step": steps, "kind": "identity-size",
                              "expected": lpark(node), "got": len(body_id)})
+        if logged != lpark(node):
+            failures.append({"step": steps, "kind": "log-size",
+                             "expected": lpark(node), "got": logged})
         if len(body_gz) != comp_by_state[node]:
             failures.append({"step": steps, "kind": "compressed-size",
                              "expected": comp_by_state[node],
@@ -180,7 +228,8 @@ def part2(states, rows):
             print(f"  ... {steps}/{n_edges} transitions, "
                   f"{len(failures)} failures so far")
     print(f"part2: executed {steps} transitions, {len(failures)} failures")
-    return {"edges": n_edges, "steps": steps,
+    return {"edges": n_edges, "steps": steps, "valid": n_valid,
+            "rejected": n_reject,
             "failures": failures[:50], "n_failures": len(failures)}
 
 
