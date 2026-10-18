@@ -6,7 +6,8 @@ Files
 - `model.py` — the formal model: sets O, L, V, S; lpark(); the 209 valid states and the 16 states of A (1056 bytes).
 - `measure_sizes.py` — the conformance-test harness. `python3 measure_sizes.py --walk` builds the input-complete
   transition graph (1088 state-changing transitions + 3928 rejected requests as self-loops = 5016 edges), constructs an
-  Eulerian circuit with Hierholzer's algorithm, executes it against the live system, and after every request checks
+  Eulerian circuit with Hierholzer's algorithm, checks that it uses every edge exactly once, executes it against the
+  live system, and after every request checks
   the Redis state, the response-body length, and the size field Apache logged, all against the model.
 - `defect-check-2026-10-18.md` — the check of the published defect lists for the test system's component
   versions against the functions the scripts rely on (the paper's first guideline).

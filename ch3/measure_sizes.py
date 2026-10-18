@@ -189,6 +189,13 @@ def build_euler_circuit(states):
             path.append(stack.pop())
     path.reverse()
     circuit = path
+    # The walk must use every edge exactly once and return to the start.
+    # Step k goes from circuit[k][0] to circuit[k+1][0] via circuit[k+1][1],
+    # and (source state, input) identifies an edge.
+    used = [(circuit[k][0], circuit[k + 1][1]) for k in range(len(circuit) - 1)]
+    assert len(used) == n_edges == len(set(used)), \
+        "walk does not cover every edge exactly once"
+    assert circuit[-1][0] == start, "walk does not return to the start"
     return circuit, n_edges
 
 
