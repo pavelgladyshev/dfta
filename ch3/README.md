@@ -8,9 +8,12 @@ Files
   transition graph (1088 state-changing transitions + 3928 rejected requests as self-loops = 5016 edges), constructs an
   Eulerian circuit with Hierholzer's algorithm, executes it against the live system, and after every request checks
   the Redis state, the response-body length, and the size field Apache logged, all against the model.
+- `defect-check-2026-10-18.md` — the check of the published defect lists for the test system's component
+  versions against the functions the scripts rely on (the paper's first guideline).
 
 Test system used in the paper
-- Ubuntu 24.04.1 LTS (Multipass VM), Apache 2.4.58, PHP 8.3.6 with the redis extension, Redis 7.0.15, Python 3.12.3.
+- Ubuntu 24.04.1 LTS (Multipass VM), Apache 2.4.58, PHP 8.3.6 as mod_php with the phpredis extension 5.3.7,
+  Redis 7.0.15, Python 3.12.3 (Ubuntu package versions in `defect-check-2026-10-18.md`).
 - The application is served from the Apache document root; basic authentication with the users
   `johnson`, `anonymous`, `lowry`, `hyde` (password `parkpass`, see `PASSWORD` in the harness).
 - Initialise the database once with `sh parkinfo/install.sh`. It creates the keys `stephens`, `synge`, `westland`
