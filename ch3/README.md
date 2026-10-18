@@ -1,7 +1,8 @@
 # parkinfo: model and conformance-test harness
 
 Files
-- `parkinfo/` — the PHP web application (parkinfo.php, reserve.php, release.php, parkinfo.css).
+- `parkinfo/` — the PHP web application (parkinfo.php, reserve.php, release.php, parkinfo.css) and `install.sh`,
+  which creates the four parking-space keys in Redis with the value `empty`.
 - `model.py` — the formal model: sets O, L, V, S; lpark(); the 209 valid states and the 16 states of A (1056 bytes).
 - `measure_sizes.py` — the conformance-test harness. `python3 measure_sizes.py --walk` builds the input-complete
   transition graph (1088 state-changing transitions + 3928 rejected requests as self-loops = 5016 edges), constructs an
@@ -12,6 +13,9 @@ Test system used in the paper
 - Ubuntu 24.04.1 LTS (Multipass VM), Apache 2.4.58, PHP 8.3.6 with the redis extension, Redis 7.0.15, Python 3.12.3.
 - The application is served from the Apache document root; basic authentication with the users
   `johnson`, `anonymous`, `lowry`, `hyde` (password `parkpass`, see `PASSWORD` in the harness).
+- Initialise the database once with `sh parkinfo/install.sh`. It creates the keys `stephens`, `synge`, `westland`
+  and `kildare` with the value `empty` (`SETNX`, so an existing key is left untouched); the scripts only ever write
+  `empty` or a user name to them, and the harness starts its walk from this all-empty state.
 - Apache must write a body-length access log, because Ubuntu's stock `common` and `combined` formats record `%O`
   (bytes sent including headers), not `%b`. Add to the site configuration and reload Apache:
 
